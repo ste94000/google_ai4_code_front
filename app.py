@@ -3,35 +3,31 @@ import os
 import time
 import io
 import requests
-import json
+from fastapi import FastAPI, File, UploadFile
 
 # Set the title and subheader of the app
 st.title('Welcome to Notebook Organizer :orange_book:')
-st.subheader('This app will sort your messy notebook')
+st.subheader('This app will sort your messy Jupyter notebook')
 
 # Create a file uploader widget
 uploaded_nb = st.file_uploader("Upload a notebook to sort!", type=['ipynb'])
+
 st.markdown('---')
-
 if uploaded_nb is not None:
-    st.subheader("I've never seen a notebook that clean :sunglasses:")
 
-    api_url = 'https://googleai4code-ik6xds2r4a-ew.a.run.app/predict/'
+    api_url = 'https://googleai4code-sk7vxxr4rq-ew.a.run.app/predict'
 
-    response = requests.get(api_url, files={'file': uploaded_nb})
-    if response.status_code == 200:
-        st.write('Success')
-        prediction = response.json()
-        st.write(prediction)
+    content = uploaded_nb.read()
 
-
-#st.subheader("I've never seen a notebook that clean ! :sunglasses:")
-
-#with open('response_1719674261333.json', 'r', encoding='utf-8') as file:
-#    data = json.load(file)
-#
-#for cell_type, content in zip(data['cell_type'].values(), data['source'].values()):
-#    if cell_type == 'code':
-#        st.code(content)
-#    else:
-#        st.markdown(content)
+    with st.spinner('Cleaning your confusing notebook...'):
+        response = requests.post(api_url, files={'notebook_file': content})
+        nb = response.json()
+        if response.status_code == 200:
+            for cell_type, content in zip(nb['cell_type'].values(), nb['source'].values()):
+                if cell_type == 'code':
+                    st.code(content)
+                else:
+                    st.markdown(content)
+        else:
+            st.markdown("**Oops**, something went wrong 😓 Please try again.")
+            st.write(response.status_code, response.content)
